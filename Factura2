@@ -1,0 +1,51 @@
+import java.text.DecimalFormat;
+
+public class Factura {
+    private int numero;
+    private String cliente;
+    private double monto;
+    private static final DecimalFormat df = new DecimalFormat("#,##0.00");
+
+    public Factura(int numero, String cliente, double monto) {
+        if (numero <= 0) {
+            throw new IllegalArgumentException("El número de factura debe ser positivo.");
+        }
+        if (cliente == null || cliente.trim().isEmpty()) {
+            throw new IllegalArgumentException("El nombre del cliente no puede estar vacío.");
+        }
+        if (monto < 0) {
+            throw new IllegalArgumentException("El monto no puede ser negativo.");
+        }
+
+        this.numero = numero;
+        this.cliente = cliente;
+        this.monto = monto;
+    }
+
+    public int getNumero() {
+        return numero;
+    }
+
+    public String getCliente() {
+        return cliente;
+    }
+
+    public double getMonto() {
+        return monto;
+    }
+
+    // Método que muestra los detalles de la factura de forma ordenada
+    public String detalles() {
+        return "============================\n" +
+               "       FACTURA #" + numero + "\n" +
+               "============================\n" +
+               "Cliente: " + cliente + "\n" +
+               "Monto: $" + df.format(monto) + "\n" +
+               "----------------------------";
+    }
+
+    @Override
+    public String toString() {
+        return "Factura #" + numero + " - Cliente: " + cliente + " - Monto: $" + df.format(monto);
+    }
+}
