@@ -1,0 +1,192 @@
+import java.io.*;
+import java.util.ArrayList;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class FacturaApp {
+
+    private static ArrayList<Factura> facturas = new ArrayList<>();
+    private static JFrame frame;
+    public static void crearInterfaz() {
+        frame = new JFrame("Gestión de Facturas");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(500, 400);
+        frame.setLayout(new BorderLayout());
+
+        JPanel panelSuperior = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JButton btnSalir = new JButton("Salir");
+        btnSalir.addActionListener(e -> System.exit(0));
+        panelSuperior.add(btnSalir);
+        frame.add(panelSuperior, BorderLayout.NORTH);
+
+        JPanel panelOpciones = new JPanel();
+        panelOpciones.setLayout(new GridLayout(4, 1, 10, 10));
+
+        JButton btnCrear = new JButton("Crear Factura");
+        btnCrear.addActionListener(e -> abrirCrearFacturaDialog());
+
+        JButton btnRegistro = new JButton("Registro de Facturas");
+        btnRegistro.addActionListener(e -> abrirRegistroFacturasDialog());
+
+        JButton btnConsulta = new JButton("Consulta de Facturas");
+        btnConsulta.addActionListener(e -> abrirConsultaFacturaDialog());
+
+        JButton btnGenerarLista = new JButton("Generar Lista de Facturas");
+        btnGenerarLista.addActionListener(e -> generarArchivo());
+
+        panelOpciones.add(btnCrear);
+        panelOpciones.add(btnRegistro);
+        panelOpciones.add(btnConsulta);
+        panelOpciones.add(btnGenerarLista);
+
+        frame.add(panelOpciones, BorderLayout.CENTER);
+        frame.setVisible(true);
+    }
+
+    private static void abrirCrearFacturaDialog() {
+
+        JDialog dialog = new JDialog(frame, "Crear Factura", true);
+        dialog.setSize(350, 250);
+        dialog.setLayout(new BorderLayout());
+        dialog.setLocationRelativeTo(frame);
+
+        JPanel panelTop = new JPanel();
+        int facturaNumero = facturas.size() + 1;
+        JLabel lblTitulo = new JLabel("FACTURA #" + facturaNumero);
+        lblTitulo.setFont(new Font("Arial", Font.BOLD, 16));
+        panelTop.add(lblTitulo);
+        dialog.add(panelTop, BorderLayout.NORTH);
+
+        JPanel panelCenter = new JPanel();
+        panelCenter.setLayout(new GridLayout(2, 2, 10, 10));
+
+        JLabel lblCliente = new JLabel("Nombre y Apellido:");
+        JTextField tfCliente = new JTextField();
+
+        JLabel lblMonto = new JLabel("Monto:");
+        JTextField tfMonto = new JTextField();
+
+        panelCenter.add(lblCliente);
+        panelCenter.add(tfCliente);
+        panelCenter.add(lblMonto);
+        panelCenter.add(tfMonto);
+
+        dialog.add(panelCenter, BorderLayout.CENTER);
+
+        JPanel panelBottom = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JButton btnGuardar = new JButton("Guardar");
+        JButton btnSalirDialog = new JButton("Salir");
+
+        btnGuardar.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    String cliente = tfCliente.getText().trim();
+                    if (cliente.isEmpty()) {
+                        JOptionPane.showMessageDialog(dialog, "El nombre y apellido es requerido.");
+                        return;
+                    }
+                    double monto = Double.parseDouble(tfMonto.getText().trim());
+                    Factura fac = new Factura(facturaNumero, cliente, monto);
+                    facturas.add(fac);
+                    JOptionPane.showMessageDialog(dialog, "Factura guardada correctamente.");
+                    dialog.dispose();
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(dialog, "Error en la entrada de datos: " + ex.getMessage());
+                }
+            }
+        });
+
+        btnSalirDialog.addActionListener(e -> dialog.dispose());
+        panelBottom.add(btnGuardar);
+        panelBottom.add(btnSalirDialog);
+        dialog.add(panelBottom, BorderLayout.SOUTH);
+
+        dialog.setVisible(true);
+    }
+    private static void abrirRegistroFacturasDialog() {
+        JDialog dialog = new JDialog(frame, "Registro de Facturas", true);
+        dialog.setSize(500, 300);
+        dialog.setLocationRelativeTo(frame);
+
+        String[] columnas = {"Factura #", "Nombre y Apellido", "Monto"};
+        String[][] datos = new String[facturas.size()][3];
+        for (int i = 0; i < facturas.size(); i++) {
+            Factura f = facturas.get(i);
+            datos[i][0] = String.valueOf(f.getNumero());
+            datos[i][1] = f.getCliente();
+            datos[i][2] = String.valueOf(f.getMonto());
+        }
+        JTable table = new JTable(datos, columnas);
+        JScrollPane scrollPane = new JScrollPane(table);
+        dialog.add(scrollPane);
+        dialog.setVisible(true);
+    }
+
+    private static void abrirConsultaFacturaDialog() {
+        String input = JOptionPane.showInputDialog(frame, "Número de la factura:");
+        if (input != null) {
+            try {
+                int numeroConsulta = Integer.parseInt(input.trim());
+                Factura facturaEncontrada = null;
+                for (Factura f : facturas) {
+                    if (f.getNumero() == numeroConsulta) {
+                        facturaEncontrada = f;
+                        break;
+                    }
+                }
+                if (facturaEncontrada != null) {
+                    JOptionPane.showMessageDialog(frame, facturaEncontrada.toString(), 
+                                                  "Factura #" + numeroConsulta, JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(frame, "Factura no se encuentra registrada", 
+                                                  "Consulta de Facturas", JOptionPane.WARNING_MESSAGE);
+                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(frame, "Error en la entrada de datos: " + e.getMessage());
+            }
+        }
+    }
+
+ 
+    private static void generarArchivo() {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter("facturas.txt"))) {
+            for (Factura f : facturas) {
+                bw.write("Factura #" + f.getNumero() + " - " + f.getCliente() + " - " + f.getMonto());
+                bw.newLine();
+            }
+            JOptionPane.showMessageDialog(frame, "Archivo generado correctamente.");
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(frame, "Error al generar el archivo: " + e.getMessage());
+        }
+    }
+}
+
+class Factura {
+    private int numero;
+    private String cliente;
+    private double monto;
+
+    public Factura(int numero, String cliente, double monto) {
+        this.numero = numero;
+        this.cliente = cliente;
+        this.monto = monto;
+    }
+
+    public int getNumero() {
+        return numero;
+    }
+
+    public String getCliente() {
+        return cliente;
+    }
+
+    public double getMonto() {
+        return monto;
+    }
+
+    @Override
+    public String toString() {
+        return "Factura #" + numero + "\nCliente: " + cliente + "\nMonto: " + monto;
+    }
+}
